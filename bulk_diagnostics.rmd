@@ -1,0 +1,72 @@
+---
+title: "Comprehensive Model Diagnostic Report"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 10)
+library(performance)
+library(see)
+library(dplyr)
+library(knitr)
+```
+
+```{r, results='asis'}
+for (outcome in names(outcome_measures)) {
+  
+  outcome_post <- paste0(outcome, "_post")
+  outcome_pre <- paste0(outcome, "_pre")
+  
+  if (all(c(outcome_post, outcome_pre, "interventiongroup") %in% names(df_rct_wide))) {
+    
+    # 1. TEST THE ASSUMPTION
+    model_with_interaction <- lm(as.formula(paste(outcome_post, "~ interventiongroup *", outcome_pre)), data = df_rct_wide)
+    interaction_pval <- summary(model_with_interaction)$coefficients[4, 4]
+    
+    # 2. CHOOSE THE FINAL MODEL
+    if (interaction_pval < 0.05) {
+      final_model <- model_with_interaction
+      model_type <- "Model WITH Interaction"
+      model_formula <- paste(outcome_post, "~ interventiongroup *", outcome_pre)
+    } else {
+      final_model <- lm(as.formula(paste(outcome_post, "~ interventiongroup +", outcome_pre)), data = df_rct_wide)
+      model_type <- "Model WITHOUT Interaction (Standard ANCOVA)"
+      model_formula <- paste(outcome_post, "~ interventiongroup +", outcome_pre)
+    }
+    
+    # Create a header for this section with the pretty name
+    pretty_name <- outcome_measures[[outcome]]$name
+    unit <- outcome_measures[[outcome]]$unit
+    cat(paste0("\n## ", pretty_name, " (", unit, ")\n\n"))
+    
+    # Print the model formula and decision
+    cat(paste("**", model_type, "**", "\n\n"))
+    cat(paste("**Formula:**", model_formula, "\n\n"))
+    cat(paste("**Interaction Term p-value:**", round(interaction_pval, 4), "\n\n"))
+    
+    # Print the ANOVA summary for the FINAL model
+    cat("### ANOVA Summary\n")
+    print(knitr::kable(anova(final_model), caption = "Analysis of Variance Table"))
+    cat("\n")
+    
+    # Print coefficient summary for the FINAL model
+    cat("### Coefficient Estimates\n")
+    coeff_summary <- summary(final_model)$coefficients
+    print(knitr::kable(coeff_summary, caption = "Model Coefficients with Standard Errors"))
+    cat("\n")
+    
+    # Print the diagnostic plot for the FINAL model
+    cat("### Assumption Checks\n")
+    diag_plot <- check_model(final_model)
+    print(diag_plot)
+    
+    cat("\n---\n")
+    
+  } else {
+    cat(paste0("\n## Skipping: ", outcome, " - variables not found in dataframe\n\n"))
+    cat("\n---\n")
+  }
+}
+```
