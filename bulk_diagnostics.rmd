@@ -7,10 +7,13 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 10)
+# Load necessary libraries
 library(performance)
 library(see)
 library(dplyr)
 library(knitr)
+library(ggplot2)
+library(patchwork)
 ```
 
 ```{r, results='asis'}
@@ -21,11 +24,13 @@ for (outcome in names(outcome_measures)) {
   
   if (all(c(outcome_post, outcome_pre, "interventiongroup") %in% names(df_rct_wide))) {
     
-    # 1. TEST THE ASSUMPTION
+    # 1. TEST THE ASSUMPTION: Fit the model WITH the interaction
     model_with_interaction <- lm(as.formula(paste(outcome_post, "~ interventiongroup *", outcome_pre)), data = df_rct_wide)
+    
+    # Extract the p-value for the interaction term
     interaction_pval <- summary(model_with_interaction)$coefficients[4, 4]
     
-    # 2. CHOOSE THE FINAL MODEL
+    # 2. CHOOSE THE FINAL MODEL based on the test
     if (interaction_pval < 0.05) {
       final_model <- model_with_interaction
       model_type <- "Model WITH Interaction"
@@ -57,10 +62,46 @@ for (outcome in names(outcome_measures)) {
     print(knitr::kable(coeff_summary, caption = "Model Coefficients with Standard Errors"))
     cat("\n")
     
-    # Print the diagnostic plot for the FINAL model
+    # 3. CREATE TRADITIONAL DIAGNOSTIC PLOTS FOR THE *FINAL* MODEL
     cat("### Assumption Checks\n")
-    diag_plot <- check_model(final_model)
-    print(diag_plot)
+    
+    plot_data <- data.frame(
+      fitted_values = fitted(final_model),
+      residuals = residuals(final_model),
+      std_residuals = rstandard(final_model)
+    )
+    
+    # Create the three standard plots
+    p1 <- ggplot(plot_data, aes(x = fitted_values, y = residuals)) +
+      geom_point(alpha = 0.7) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+      geom_smooth(method = "loess", se = FALSE, color = "blue") +
+      labs(title = "Residuals vs. Fitted", 
+           subtitle = "Check for Linearity & Constant Variance",
+           x = "Fitted Values", y = "Residuals") +
+      theme_minimal()
+    
+    p2 <- ggplot(plot_data, aes(sample = residuals)) +
+      stat_qq(alpha = 0.7) +
+      stat_qq_line(color = "red") +
+      labs(title = "Normal Q-Q Plot", 
+           subtitle = "Check for Normality of Residuals",
+           x = "Theoretical Quantiles", y = "Sample Quantiles") +
+      theme_minimal()
+    
+    p3 <- ggplot(plot_data, aes(x = fitted_values, y = sqrt(abs(std_residuals)))) +
+      geom_point(alpha = 0.7) +
+      geom_smooth(method = "loess", se = FALSE, color = "blue") +
+      labs(title = "Scale-Location Plot", 
+           subtitle = "Check for Homoscedasticity (Equal Variance)",
+           x = "Fitted Values", y = "sqrt(|Standardized Residuals|)") +
+      theme_minimal()
+    
+    # Combine them into a single panel
+    combined_plot <- (p1 | p2) / p3  # (Plot1 and Plot2 on top), Plot3 on bottom
+    
+    # Print the combined plot
+    print(combined_plot)
     
     cat("\n---\n")
     
