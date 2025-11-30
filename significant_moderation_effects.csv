@@ -1,0 +1,8 @@
+"outcome","predictor","best_model","interaction_term","interaction_beta","interaction_se","interaction_t","interaction_p","marginal_r2","conditional_r2","N_observations","N_subjects","covariates_used"
+"dsq_sum","smip","random_intercept_slope","resp_value:condition",-0.0276084569945417,0.00604654683465504,-4.56598745523763,3.51370242048875e-05,0.166195203928536,0.951812867984196,80,22,"data_age, subject_female"
+"fss_sum","slopesmip","random_intercept","resp_value:condition",-0.238516229170118,0.0627447851854991,-3.80137135643969,0.000459908033665128,0.300978555173968,0.88778756294037,58,17,"data_age, subject_female"
+"fss_sum","id","random_intercept","resp_value:condition",0.994399545796075,0.292880312937358,3.39524202164029,0.00159416242281898,0.323128386115041,0.914033437464057,58,17,"data_age, subject_female"
+"dsq_sum","mip","random_intercept_slope","resp_value:condition",-0.13288175068391,0.0399635098848647,-3.32507707823322,0.00159623471485261,0.132492735727627,0.969224247411351,80,22,"data_age, subject_female"
+"woods_sum","pif","random_intercept_slope","resp_value:condition",-2.03213680982122,0.744552593998975,-2.72933950697379,0.00849225339915872,0.316540273842365,0.983708311657743,78,22,"data_age, subject_female"
+"woods_sum","sindex","random_intercept_slope","resp_value:condition",-0.109187810700524,0.0437567404819043,-2.49533693547577,0.0155833478598386,0.319681096213854,0.983235937328497,78,22,"data_age, subject_female"
+"woods_sum","smip","random_intercept","resp_value:condition",-0.0160867821530534,0.00651154228007691,-2.47050260308889,0.0163457198488215,0.137964169710152,0.804130377932665,80,22,"data_age, subject_female"
